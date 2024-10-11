@@ -1,0 +1,2 @@
+funCase = require('../src')
+

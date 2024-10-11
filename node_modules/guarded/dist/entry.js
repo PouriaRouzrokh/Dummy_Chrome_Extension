@@ -1,0 +1,2 @@
+guarded = require('../src')
+

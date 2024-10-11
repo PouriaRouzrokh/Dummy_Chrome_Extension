@@ -1,0 +1,32 @@
+{
+  "image": "node:4",
+  "stages": [
+    "test",
+    "deploy"
+  ],
+  "test": {
+    "stage": "test",
+    "script": [
+      "npm install",
+      "npm test"
+    ],
+    "except": [
+      "pages"
+    ]
+  },
+  "pages": {
+    "stage": "deploy",
+    "script": [
+      "npm run pages"
+    ],
+    "environment": "pages",
+    "artifacts": {
+      "paths": [
+        "public"
+      ]
+    },
+    "only": [
+      "master"
+    ]
+  }
+}

@@ -1,0 +1,4 @@
+# [fun-curry](https://bagrounds.gitlab.io/fun-curry)
+
+((a1, a2, ..., an) -> x) -> (a1 -> a2 -> ... -> an -> x)
+

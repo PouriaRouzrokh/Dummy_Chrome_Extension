@@ -1,0 +1,2 @@
+funObject = require('../src')
+

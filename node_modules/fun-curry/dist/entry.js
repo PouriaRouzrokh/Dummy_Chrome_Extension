@@ -1,0 +1,2 @@
+funCurry = require('../src')
+

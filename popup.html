@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Modify Macro Names</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Uppercased Text</h1>
+    <textarea id="uppercasedTextArea" readonly></textarea>
+    
+    <h2>Rename Macros</h2>
+    <div>
+      <label for="uppercaseText">Uppercase Text Name:</label>
+      <input type="text" id="uppercaseText" value="Uppercase">
+    </div>
+    <div>
+      <label for="capitalizeText">Capitalize Text Name:</label>
+      <input type="text" id="capitalizeText" value="Capitalize">
+    </div>
+    <div>
+      <label for="reverseText">Reverse Text Name:</label>
+      <input type="text" id="reverseText" value="Reverse">
+    </div>
+    <button id="renameButton">Rename Macros</button>
+  </div>
+
+  <script src="./dist/popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,2 @@
+stringifyAnything = require('../src')
+
