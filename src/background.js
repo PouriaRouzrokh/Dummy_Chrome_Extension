@@ -2,6 +2,9 @@ import { makeUppercase } from './uppercase.js';
 import _ from 'lodash';
 import reverse from 'reverse-string';
 
+
+// Context Menu Handling ---------------------------------------------------------------------------
+
 // Define the context menu items
 let contextMenuItems = {
   uppercaseText: "Uppercase",
@@ -37,7 +40,7 @@ chrome.runtime.onInstalled.addListener(() => {
   createContextMenu();
 });
 
-// Message listener to handle renaming macros
+// Message listener to handle renaming macros in the context menu
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.type === "renameMacros") {
     contextMenuItems = {
@@ -50,7 +53,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
-// Handle menu item clicks
+// Handle menu item clicks in the context menu
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   let modifiedText;
 
@@ -70,12 +73,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   }
 });
 
-// Open the side panel when the bubble is clicked
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === 'openSidePanel') {
-    chrome.sidePanel.open({ tabId: sender.tab.id });
-  }
-});
+// Bubble handling ---------------------------------------------------------------------------
 
 // Show/hide bubble when tab becomes active/inactive
 chrome.tabs.onActivated.addListener((activeInfo) => {
@@ -96,5 +94,12 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     } else {
       chrome.tabs.sendMessage(tabId, { action: 'toggleBubble', show: false });
     }
+  }
+});
+
+// Open the side panel when the bubble is clicked
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === 'openSidePanel') {
+    chrome.sidePanel.open({ tabId: sender.tab.id });
   }
 });
