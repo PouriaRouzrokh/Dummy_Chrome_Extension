@@ -5,6 +5,8 @@ module.exports = {
     background: './src/background.js',
     popup: './src/popup.js',
     uppercase: './src/uppercase.js',
+    sidepanel: './src/sidepanel.js',
+    content: './src/content.js'
   },
   output: {
     path: path.resolve(__dirname, 'dist'),

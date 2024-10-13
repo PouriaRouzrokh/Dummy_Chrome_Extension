@@ -17441,6 +17441,49 @@ chrome.contextMenus.onClicked.addListener(function (info, tab) {
     });
   }
 });
+
+// Open the side panel when the bubble is clicked
+chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+  if (request.action === 'openSidePanel') {
+    chrome.sidePanel.open({
+      tabId: sender.tab.id
+    });
+  }
+});
+
+// Show/hide bubble when tab becomes active/inactive
+chrome.tabs.onActivated.addListener(function (activeInfo) {
+  chrome.tabs.get(activeInfo.tabId, function (tab) {
+    if (tab && tab.url && tab.url.startsWith('http')) {
+      chrome.tabs.sendMessage(activeInfo.tabId, {
+        action: 'toggleBubble',
+        show: true
+      });
+    } else {
+      chrome.tabs.sendMessage(activeInfo.tabId, {
+        action: 'toggleBubble',
+        show: false
+      });
+    }
+  });
+});
+
+// Show/hide bubble when URL changes
+chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
+  if (changeInfo.status === 'complete' && tab && tab.url) {
+    if (tab.url.startsWith('http')) {
+      chrome.tabs.sendMessage(tabId, {
+        action: 'toggleBubble',
+        show: true
+      });
+    } else {
+      chrome.tabs.sendMessage(tabId, {
+        action: 'toggleBubble',
+        show: false
+      });
+    }
+  }
+});
 })();
 
 /******/ })()

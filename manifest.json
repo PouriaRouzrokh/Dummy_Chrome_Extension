@@ -2,11 +2,20 @@
   "manifest_version": 3,
   "name": "Text Modification Extension",
   "version": "1.0",
-  "permissions": ["contextMenus", "activeTab", "storage"],
+  "permissions": ["contextMenus", "activeTab", "storage", "sidePanel"],
   "background": {
     "service_worker": "./dist/background.js",
     "type": "module"
   },
+  "side_panel": {
+    "default_path": "./assets/sidepanel.html"
+  },
+  "content_scripts": [
+  {
+    "matches": ["<all_urls>"],
+    "js": ["./dist/content.js"]
+  }
+  ],
   "action": {
     "default_popup": "./assets/popup.html"
   }
