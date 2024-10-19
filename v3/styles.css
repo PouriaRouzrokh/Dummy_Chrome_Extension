@@ -1,0 +1,53 @@
+body {
+    width: 400px;
+    height: 600px;
+    overflow-y: auto;
+    background-color: #f8f9fa;
+    font-size: 14px;
+}
+
+.container {
+    max-width: 100%;
+    padding: 15px;
+}
+
+.card {
+    margin-bottom: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    background-color: #007bff;
+    color: white;
+}
+
+.btn-add {
+    margin-bottom: 20px;
+}
+
+.api-key {
+    font-family: monospace;
+}
+
+/* Ensure modal fits within popup */
+.modal-dialog {
+    max-width: 90%;
+    margin: 1.75rem auto;
+}
+
+/* Adjust font sizes for popup */
+h1 {
+    font-size: 1.5rem;
+}
+
+.card-title {
+    font-size: 1.1rem;
+}
+
+.card-text {
+    font-size: 0.9rem;
+}
+
+.btn {
+    font-size: 0.8rem;
+}

@@ -6,3 +6,4 @@ The current extensions:
 
 - v1: demonstrates a simple chrome extension with modular imports, webpack builds, and sidebar.
 - v2: demonstrates the functionality to load curl APIs from saved templates on the disk and runs them from the background.js
+- v3: demonstrates the functionality to add, edit, remove, and sync APIs.

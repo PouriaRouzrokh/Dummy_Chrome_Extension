@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM API Manager</title>
+    <link href="lib/css/bootstrap.min.css" rel="stylesheet">
+    <link href="styles.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container" style="width: 400px;">
+        <h1 class="text-center mb-4">LLM API Manager</h1>
+        <button id="addApiBtn" class="btn btn-primary btn-add mb-3" data-bs-toggle="modal" data-bs-target="#apiModal">Add New API</button>
+        <div id="apiList"></div>
+    </div>
+
+    <!-- Modal for adding/editing API -->
+    <div class="modal fade" id="apiModal" tabindex="-1" aria-labelledby="apiModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="apiModalLabel">Add/Edit API</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="apiForm">
+                        <input type="hidden" id="apiId">
+                        <div class="mb-3">
+                            <label for="modelProvider" class="form-label">Model Provider</label>
+                            <input type="text" class="form-control" id="modelProvider" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <input type="text" class="form-control" id="description" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="apiKey" class="form-label">API Key</label>
+                            <input type="text" class="form-control" id="apiKey" required>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="saveApiBtn">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="lib/js/bootstrap.bundle.min.js"></script>
+    <script src="default-apis.js" type="module"></script>
+    <script src="api-manager.js" type="module"></script>
+</body>
+</html>
