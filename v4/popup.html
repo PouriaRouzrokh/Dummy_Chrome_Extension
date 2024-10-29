@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Custom Function Runner</title>
+  <style>
+    body {
+      width: 500px;
+      padding: 20px;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    .container {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    
+    h2 {
+      color: #2c3e50;
+      margin: 0 0 15px 0;
+    }
+    
+    .editor-container {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    
+    #functionEditor {
+      width: 100%;
+      height: 200px;
+      padding: 15px;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 14px;
+      border: none;
+      resize: vertical;
+      background-color: #f8f9fa;
+    }
+    
+    .button-container {
+      display: flex;
+      gap: 10px;
+    }
+    
+    button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.3s;
+      flex: 1;
+    }
+    
+    button:hover {
+      background-color: #2980b9;
+    }
+    
+    #saveFunction {
+      background-color: #2ecc71;
+    }
+    
+    #saveFunction:hover {
+      background-color: #27ae60;
+    }
+    
+    #result {
+      padding: 15px;
+      border-radius: 5px;
+      background-color: #f8f9fa;
+      border: 1px solid #ddd;
+      min-height: 50px;
+      white-space: pre-wrap;
+      display: none;
+      font-family: monospace;
+    }
+    
+    .result-visible {
+      display: block !important;
+    }
+    
+    .error {
+      color: #e74c3c;
+      background-color: #fde8e8;
+    }
+    
+    .success {
+      color: #2ecc71;
+      background-color: #e8f8e8;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Custom Function Runner</h2>
+    <div class="editor-container">
+      <textarea id="functionEditor">function processPage() {
+  // Your code here
+  const h1s = document.querySelectorAll('h1');
+  return Array.from(h1s).map(h1 => h1.textContent);
+}</textarea>
+    </div>
+    <div class="button-container">
+      <button id="saveFunction">Save Function</button>
+      <button id="runFunction">Run Function</button>
+    </div>
+    <div id="result"></div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

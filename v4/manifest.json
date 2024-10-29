@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "Custom Function Runner",
+  "version": "1.0",
+  "description": "Run custom JavaScript functions in the current tab",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  }
+}
