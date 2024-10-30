@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "API Request Handler",
+  "version": "1.0",
+  "description": "Send custom API requests using CURL schema",
+  "permissions": ["storage"],
+  "action": {
+    "default_popup": "popup.html"
+  }
+}
