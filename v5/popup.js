@@ -42,15 +42,41 @@ document.addEventListener('DOMContentLoaded', function() {
     responseArea.innerHTML = '';
 
     try {
-      const parsedCurl = parseCurl(curl, message);
-      const response = await makeRequest(parsedCurl);
-      rawResponse = response;
-      displayResponse(response);
+      chrome.runtime.sendMessage(
+        { 
+          type: 'makeRequest',
+          curlCommand: curl,
+          message: message
+        },
+        function(response) {
+          if (response.success) {
+            rawResponse = response.data;
+            displayResponse(response.data);
+          } else {
+            responseArea.innerHTML = `<span class="text-red-500">Error: ${response.error}</span>`;
+          }
+          loadingIndicator.style.display = 'none';
+        }
+      );
     } catch (error) {
       loadingIndicator.style.display = 'none';
       responseArea.innerHTML = `<span class="text-red-500">Error: ${error.message}</span>`;
     }
   });
+
+  function extractValue(obj, path) {
+    if (!path) return obj;
+    
+    return path.split('.').reduce((current, part) => {
+      if (part.includes('[') && part.includes(']')) {
+        const arrayPart = part.split('[');
+        const arrayName = arrayPart[0];
+        const index = parseInt(arrayPart[1].replace(']', ''));
+        return current[arrayName][index];
+      }
+      return current[part];
+    }, obj);
+  }
 
   function displayResponse(response) {
     loadingIndicator.style.display = 'none';
@@ -76,62 +102,3 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 });
-
-function extractValue(obj, path) {
-  if (!path) return obj;
-  
-  return path.split('.').reduce((current, part) => {
-    if (part.includes('[') && part.includes(']')) {
-      const arrayPart = part.split('[');
-      const arrayName = arrayPart[0];
-      const index = parseInt(arrayPart[1].replace(']', ''));
-      return current[arrayName][index];
-    }
-    return current[part];
-  }, obj);
-}
-
-function parseCurl(curlCommand, message) {
-  const processedCommand = curlCommand.replace(/\$message\$/g, message);
-  
-  const urlMatch = processedCommand.match(/curl\s+(https?:\/\/[^\s]+)/);
-  const headerMatches = processedCommand.match(/-H\s+"([^"]+)"/g);
-  const dataMatch = processedCommand.match(/-d\s+'([^']+)'/);
-
-  if (!urlMatch) throw new Error('Invalid CURL command: URL not found');
-
-  const url = urlMatch[1];
-  const headers = {};
-  
-  if (headerMatches) {
-    headerMatches.forEach(header => {
-      const [key, value] = header.match(/-H\s+"([^"]+)"/)[1].split(': ');
-      headers[key] = value;
-    });
-  }
-
-  let data = null;
-  if (dataMatch) {
-    try {
-      data = JSON.parse(dataMatch[1]);
-    } catch (e) {
-      data = dataMatch[1];
-    }
-  }
-
-  return { url, headers, data };
-}
-
-async function makeRequest({ url, headers, data }) {
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: headers,
-    body: JSON.stringify(data)
-  });
-
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
-
-  return await response.json();
-}
