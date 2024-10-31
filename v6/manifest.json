@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "OpenAI Chat Streamer",
+  "version": "1.0",
+  "description": "Stream responses from OpenAI's chat API",
+  "permissions": [
+    "storage"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "host_permissions": [
+    "https://api.openai.com/*"
+  ]
+}
