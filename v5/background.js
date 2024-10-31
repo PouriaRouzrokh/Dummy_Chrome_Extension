@@ -8,38 +8,57 @@ function parseCurl(curlCommand, message) {
     // Extract the URL and ensure it has a protocol
     let url = urlMatch[0].replace('curl ', '').trim();
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
-        // Default to http:// if no protocol is specified
         url = 'http://' + url;
     }
     
-    const headerMatches = processedCommand.match(/-H\s+"([^"]+)"/g);
-    const dataMatch = processedCommand.match(/-d\s+'([^']+)'/);
-  
+    // Enhanced regex patterns to support both short and long-form parameters
+    const headerRegexes = [
+        /(?:-H|--header)\s+"([^"]+)"/g,    // -H "header: value" or --header "header: value"
+        /(?:-H|--header)\s+'([^']+)'/g      // -H 'header: value' or --header 'header: value'
+    ];
+    
+    const dataPatterns = [
+        /(?:-d|--data|--data-raw)\s+'([^']+)'/,    // -d 'data' or --data 'data' or --data-raw 'data'
+        /(?:-d|--data|--data-raw)\s+"([^"]+)"/     // -d "data" or --data "data" or --data-raw "data"
+    ];
+
     const headers = {
         'Content-Type': 'application/json' // Default content type header
     };
     
-    if (headerMatches) {
-        headerMatches.forEach(header => {
-            const [key, value] = header.match(/-H\s+"([^"]+)"/)[1].split(': ');
-            headers[key] = value;
-        });
-    }
-  
-    let data = null;
-    if (dataMatch) {
-        try {
-            data = JSON.parse(dataMatch[1]);
-            // Handle the special case of message replacement in nested JSON
-            if (typeof data === 'object') {
-                Object.keys(data).forEach(key => {
-                    if (typeof data[key] === 'string') {
-                        data[key] = data[key].replace(/\$message\$/g, message);
-                    }
-                });
+    // Process headers
+    headerRegexes.forEach(regex => {
+        let match;
+        while ((match = regex.exec(processedCommand)) !== null) {
+            const headerContent = match[1];  // Get the captured group
+            const separatorIndex = headerContent.indexOf(':');
+            if (separatorIndex !== -1) {
+                const key = headerContent.slice(0, separatorIndex).trim();
+                const value = headerContent.slice(separatorIndex + 1).trim();
+                headers[key] = value;
             }
-        } catch (e) {
-            data = dataMatch[1].replace(/\$message\$/g, message);
+        }
+    });
+  
+    // Process data patterns
+    let data = null;
+    for (const pattern of dataPatterns) {
+        const match = processedCommand.match(pattern);
+        if (match) {
+            try {
+                data = JSON.parse(match[1]);
+                // Handle the special case of message replacement in nested JSON
+                if (typeof data === 'object') {
+                    Object.keys(data).forEach(key => {
+                        if (typeof data[key] === 'string') {
+                            data[key] = data[key].replace(/\$message\$/g, message);
+                        }
+                    });
+                }
+            } catch (e) {
+                data = match[1].replace(/\$message\$/g, message);
+            }
+            break; // Use the first matching data pattern
         }
     }
   
