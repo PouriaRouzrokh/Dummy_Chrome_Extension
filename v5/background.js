@@ -1,36 +1,32 @@
 function parseCurl(curlCommand, message) {
     const processedCommand = curlCommand.replace(/\$message\$/g, message);
     
-    // Updated regex to handle URLs with or without protocol specification
     const urlMatch = processedCommand.match(/curl\s+(?:(?:https?:)?\/\/)?([^\s]+)/);
     if (!urlMatch) throw new Error('Invalid CURL command: URL not found');
   
-    // Extract the URL and ensure it has a protocol
     let url = urlMatch[0].replace('curl ', '').trim();
     if (!url.startsWith('http://') && !url.startsWith('https://')) {
         url = 'http://' + url;
     }
     
-    // Enhanced regex patterns to support both short and long-form parameters
     const headerRegexes = [
-        /(?:-H|--header)\s+"([^"]+)"/g,    // -H "header: value" or --header "header: value"
-        /(?:-H|--header)\s+'([^']+)'/g      // -H 'header: value' or --header 'header: value'
+        /(?:-H|--header)\s+"([^"]+)"/g,
+        /(?:-H|--header)\s+'([^']+)'/g
     ];
     
     const dataPatterns = [
-        /(?:-d|--data|--data-raw)\s+'([^']+)'/,    // -d 'data' or --data 'data' or --data-raw 'data'
-        /(?:-d|--data|--data-raw)\s+"([^"]+)"/     // -d "data" or --data "data" or --data-raw "data"
+        /(?:-d|--data|--data-raw)\s+'([^']+)'/,
+        /(?:-d|--data|--data-raw)\s+"([^"]+)"/
     ];
 
     const headers = {
-        'Content-Type': 'application/json' // Default content type header
+        'Content-Type': 'application/json'
     };
     
-    // Process headers
     headerRegexes.forEach(regex => {
         let match;
         while ((match = regex.exec(processedCommand)) !== null) {
-            const headerContent = match[1];  // Get the captured group
+            const headerContent = match[1];
             const separatorIndex = headerContent.indexOf(':');
             if (separatorIndex !== -1) {
                 const key = headerContent.slice(0, separatorIndex).trim();
@@ -40,14 +36,12 @@ function parseCurl(curlCommand, message) {
         }
     });
   
-    // Process data patterns
     let data = null;
     for (const pattern of dataPatterns) {
         const match = processedCommand.match(pattern);
         if (match) {
             try {
                 data = JSON.parse(match[1]);
-                // Handle the special case of message replacement in nested JSON
                 if (typeof data === 'object') {
                     Object.keys(data).forEach(key => {
                         if (typeof data[key] === 'string') {
@@ -58,20 +52,15 @@ function parseCurl(curlCommand, message) {
             } catch (e) {
                 data = match[1].replace(/\$message\$/g, message);
             }
-            break; // Use the first matching data pattern
+            break;
         }
     }
   
     return { url, headers, data };
 }
-  
+
 async function makeRequest({ url, headers, data }) {
     try {
-        // Extract protocol and host from URL for error messaging
-        const urlObj = new URL(url);
-        const protocol = urlObj.protocol;
-        const host = urlObj.host;
-
         const response = await fetch(url, {
             method: 'POST',
             headers: headers,
@@ -87,7 +76,6 @@ async function makeRequest({ url, headers, data }) {
         if (contentType && contentType.includes('application/json')) {
             return await response.json();
         } else {
-            // Handle non-JSON responses (like text/plain)
             const text = await response.text();
             try {
                 return JSON.parse(text);
@@ -112,7 +100,59 @@ async function makeRequest({ url, headers, data }) {
         throw error;
     }
 }
-  
+
+async function handleStreamingRequest(port, parsedCurl) {
+    try {
+        const response = await fetch(parsedCurl.url, {
+            method: 'POST',
+            headers: parsedCurl.headers,
+            body: JSON.stringify(parsedCurl.data)
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+
+        try {
+            while (true) {
+                const { done, value } = await reader.read();
+                
+                if (done) {
+                    port.postMessage({ done: true });
+                    break;
+                }
+
+                const chunk = decoder.decode(value);
+                const lines = chunk.split('\n').filter(line => line.trim() !== '');
+
+                for (const line of lines) {
+                    try {
+                        const cleanLine = line.replace(/^data: /, '');
+                        if (cleanLine === '[DONE]') continue;
+                        
+                        const parsed = JSON.parse(cleanLine);
+                        port.postMessage({ content: parsed });
+                    } catch (e) {
+                        // If the line isn't JSON, send it as raw content
+                        if (line.trim()) {
+                            port.postMessage({ content: { text: line.trim() } });
+                        }
+                    }
+                }
+            }
+        } catch (error) {
+            port.postMessage({ error: `Stream error: ${error.message}` });
+        }
+    } catch (error) {
+        port.postMessage({ error: `Fetch error: ${error.message}` });
+    }
+}
+
+// Handle regular message requests
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.type === 'makeRequest') {
         const { curlCommand, message } = request;
@@ -132,4 +172,20 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             sendResponse({ success: false, error: error.message });
         }
     }
+});
+
+// Handle streaming connections
+chrome.runtime.onConnect.addListener(function(port) {
+    if (port.name !== "streaming-port") return;
+
+    port.onMessage.addListener(async function(request) {
+        if (request.type === 'makeStreamingRequest') {
+            try {
+                const parsedCurl = parseCurl(request.curlCommand, request.message);
+                await handleStreamingRequest(port, parsedCurl);
+            } catch (error) {
+                port.postMessage({ error: error.message });
+            }
+        }
+    });
 });

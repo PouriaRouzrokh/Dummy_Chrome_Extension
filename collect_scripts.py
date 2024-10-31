@@ -51,7 +51,7 @@ def create_markdown(root_dir, extensions, exclude_files, exclude_folders, output
 
 # Usage example:
 if __name__ == "__main__":
-    root_directory = os.path.join(os.path.dirname(os.path.abspath(__file__)), "v6")
+    root_directory = os.path.join(os.path.dirname(os.path.abspath(__file__)), "v5")
     extensions_to_look_for = ['.html', '.css', '.js']
     exclude_files_list = ['personal_apis.js']
     exclude_folders_list = ['libs']
