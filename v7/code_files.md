@@ -141,71 +141,94 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   
     function createFormField(key, schema) {
-      const container = document.createElement('div');
-      container.className = 'mb-4 p-3 bg-gray-50 rounded-lg';
-      
-      // Create label group
-      const labelGroup = document.createElement('div');
-      labelGroup.className = 'mb-2';
-      
-      const label = document.createElement('label');
-      label.className = 'block text-sm font-medium text-gray-700 mb-1';
-      label.textContent = key;
-      
-      // Add default value indicator if exists
-      if (schema.default !== undefined) {
-          const defaultSpan = document.createElement('span');
-          defaultSpan.className = 'ml-1 text-sm text-gray-500';
-          defaultSpan.textContent = `(default: ${schema.default})`;
-          label.appendChild(defaultSpan);
-      }
-      
-      labelGroup.appendChild(label);
-      
-      // Add description/hint if exists
-      if (schema.description) {
-          const helpText = document.createElement('div');
-          helpText.className = 'text-xs text-gray-500';
-          helpText.textContent = schema.description;
-          labelGroup.appendChild(helpText);
-      }
-      
-      container.appendChild(labelGroup);
-      
-      // Create input
-      const input = document.createElement(schema.type === 'enum' ? 'select' : 'input');
-      input.className = 'mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500';
-      input.setAttribute('data-key', key);
-      
-      if (schema.type === 'enum') {
-          schema.values.forEach(value => {
-              const option = document.createElement('option');
-              option.value = value;
-              option.textContent = value;
-              if (value === schema.default) {
-                  option.selected = true;
-              }
-              input.appendChild(option);
-          });
-      } else {
-          input.type = schema.type === 'integer' ? 'number' : 'text';
-          if (schema.type === 'integer') {
-              input.step = '1';
-              if (schema.max) input.max = schema.max;
-          }
-          if (schema.default !== undefined) {
-              input.value = schema.default;
-          }
-      }
-      
-      // Make sure default values are set
-      if (schema.default !== undefined && input.value === '') {
-          input.value = schema.default;
-      }
-      
-      container.appendChild(input);
-      dynamicForm.appendChild(container);
-   }
+        const container = document.createElement('div');
+        container.className = 'mb-4 p-3 bg-gray-50 rounded-lg';
+        
+        // Create label group
+        const labelGroup = document.createElement('div');
+        labelGroup.className = 'mb-2';
+        
+        const label = document.createElement('label');
+        label.className = 'block text-sm font-medium text-gray-700 mb-1';
+        label.textContent = key;
+        
+        // Add default value indicator if exists
+        if (schema.default !== undefined) {
+            const defaultSpan = document.createElement('span');
+            defaultSpan.className = 'ml-1 text-sm text-gray-500';
+            defaultSpan.textContent = `(default: ${schema.default})`;
+            label.appendChild(defaultSpan);
+        }
+        
+        labelGroup.appendChild(label);
+        
+        // Add description/hint if exists
+        if (schema.description) {
+            const helpText = document.createElement('div');
+            helpText.className = 'text-xs text-gray-500';
+            helpText.textContent = schema.description;
+            labelGroup.appendChild(helpText);
+        }
+        
+        container.appendChild(labelGroup);
+        
+        let input;
+        
+        // Handle different input types
+        if (schema.type === 'boolean') {
+            input = document.createElement('select');
+            input.className = 'mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500';
+            
+            const trueOption = document.createElement('option');
+            trueOption.value = 'true';
+            trueOption.textContent = 'true';
+            
+            const falseOption = document.createElement('option');
+            falseOption.value = 'false';
+            falseOption.textContent = 'false';
+            
+            input.appendChild(trueOption);
+            input.appendChild(falseOption);
+            
+            // Set default value
+            input.value = schema.default.toString();
+        } else if (schema.type === 'enum') {
+            input = document.createElement('select');
+            input.className = 'mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500';
+            
+            schema.values.forEach(value => {
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = value;
+                if (value === schema.default) {
+                    option.selected = true;
+                }
+                input.appendChild(option);
+            });
+        } else {
+            input = document.createElement('input');
+            input.className = 'mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500';
+            input.type = schema.type === 'integer' ? 'number' : 'text';
+            if (schema.type === 'integer') {
+                input.step = '1';
+                if (schema.max) input.max = schema.max;
+            }
+            if (schema.default !== undefined) {
+                input.value = schema.default;
+            }
+        }
+        
+        input.setAttribute('data-key', key);
+        input.setAttribute('data-type', schema.type);
+        
+        // Make sure default values are set
+        if (schema.default !== undefined && input.value === '') {
+            input.value = schema.default;
+        }
+        
+        container.appendChild(input);
+        dynamicForm.appendChild(container);
+    }
   
    function addArrayItem(container, schema, arrayKey, isFirstItem = false) {
     const itemContainer = document.createElement('div');
@@ -276,95 +299,97 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function collectFormData() {
-      const formData = {};
-      const inputs = dynamicForm.querySelectorAll('input, select');
-      
-      // First pass: collect all form data
-      inputs.forEach(input => {
-          const key = input.getAttribute('data-key');
-          let value = input.value;
-          
-          // Convert to number if it's a number input
-          if (input.type === 'number') {
-              value = value === '' ? null : Number(value);
-          }
-          
-          // Don't include empty values unless they're explicitly set to 0
-          if (value === '' && value !== 0) {
-              return;
-          }
-          
-          if (key.includes('[')) {
-              // Handle array fields
-              const [arrayKey, indexStr] = key.match(/(.+?)\[(\d+)\]/).slice(1);
-              const index = parseInt(indexStr);
-              const keys = arrayKey.split('.');
-              
-              let current = formData;
-              for (let i = 0; i < keys.length; i++) {
-                  const k = keys[i];
-                  if (i === keys.length - 1) {
-                      if (!Array.isArray(current[k])) {
-                          current[k] = [];
-                      }
-                      // Ensure array has enough space
-                      while (current[k].length <= index) {
-                          current[k].push({});
-                      }
-                      
-                      const remainingPath = key.split(']')[1]?.split('.').filter(Boolean);
-                      if (remainingPath && remainingPath.length > 0) {
-                          let target = current[k][index];
-                          remainingPath.forEach((p, i) => {
-                              if (i === remainingPath.length - 1) {
-                                  target[p] = value;
-                              } else {
-                                  target[p] = target[p] || {};
-                                  target = target[p];
-                              }
-                          });
-                      } else {
-                          current[k][index] = value;
-                      }
-                  } else {
-                      current[k] = current[k] || {};
-                      current = current[k];
-                  }
-              }
-          } else {
-              // Handle regular fields
-              const keys = key.split('.');
-              let current = formData;
-              keys.forEach((k, i) => {
-                  if (i === keys.length - 1) {
-                      current[k] = value;
-                  } else {
-                      current[k] = current[k] || {};
-                      current = current[k];
-                  }
-              });
-          }
-      });
+        const formData = {};
+        const inputs = dynamicForm.querySelectorAll('input, select');
+        
+        // First pass: collect all form data
+        inputs.forEach(input => {
+            const key = input.getAttribute('data-key');
+            const type = input.getAttribute('data-type');
+            let value = input.value;
+            
+            // Convert values based on type
+            if (type === 'boolean') {
+                value = value === 'true';
+            } else if (type === 'integer') {
+                value = value === '' ? null : Number(value);
+            }
+            
+            // Don't include empty values unless they're explicitly set to 0 or false
+            if (value === '' && value !== 0 && value !== false) {
+                return;
+            }
+            
+            if (key.includes('[')) {
+                // Handle array fields
+                const [arrayKey, indexStr] = key.match(/(.+?)\[(\d+)\]/).slice(1);
+                const index = parseInt(indexStr);
+                const keys = arrayKey.split('.');
+                
+                let current = formData;
+                for (let i = 0; i < keys.length; i++) {
+                    const k = keys[i];
+                    if (i === keys.length - 1) {
+                        if (!Array.isArray(current[k])) {
+                            current[k] = [];
+                        }
+                        // Ensure array has enough space
+                        while (current[k].length <= index) {
+                            current[k].push({});
+                        }
+                        
+                        const remainingPath = key.split(']')[1]?.split('.').filter(Boolean);
+                        if (remainingPath && remainingPath.length > 0) {
+                            let target = current[k][index];
+                            remainingPath.forEach((p, i) => {
+                                if (i === remainingPath.length - 1) {
+                                    target[p] = value;
+                                } else {
+                                    target[p] = target[p] || {};
+                                    target = target[p];
+                                }
+                            });
+                        } else {
+                            current[k][index] = value;
+                        }
+                    } else {
+                        current[k] = current[k] || {};
+                        current = current[k];
+                    }
+                }
+            } else {
+                // Handle regular fields
+                const keys = key.split('.');
+                let current = formData;
+                keys.forEach((k, i) => {
+                    if (i === keys.length - 1) {
+                        current[k] = value;
+                    } else {
+                        current[k] = current[k] || {};
+                        current = current[k];
+                    }
+                });
+            }
+        });
   
-      // Ensure messages array exists and has at least one item with required fields
-      if (!formData.messages || !Array.isArray(formData.messages)) {
-          formData.messages = [];
-      }
-      if (formData.messages.length === 0) {
-          formData.messages.push({
-              role: 'user',
-              content: ''
-          });
-      }
-  
-      // Ensure each message has both role and content
-      formData.messages = formData.messages.map(message => ({
-          role: message.role || 'user',
-          content: message.content || ''
-      }));
-  
-      console.log('Collected form data:', formData);  // Add this for debugging
-      return formData;
+        // Ensure messages array exists and has at least one item with required fields
+        if (!formData.messages || !Array.isArray(formData.messages)) {
+            formData.messages = [];
+        }
+        if (formData.messages.length === 0) {
+            formData.messages.push({
+                role: 'user',
+                content: ''
+            });
+        }
+
+        // Ensure each message has both role and content
+        formData.messages = formData.messages.map(message => ({
+            role: message.role || 'user',
+            content: message.content || ''
+        }));
+
+        return formData;
     }
   
     function initializePort() {
