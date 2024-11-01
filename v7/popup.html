@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>API Request Handler</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+  <style>
+    body {
+      width: 800px;
+      min-height: 600px;
+      padding: 20px;
+    }
+    .loading {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(255, 255, 255, 0.9);
+      padding: 20px;
+      border-radius: 8px;
+    }
+    #curlInput, #schemaInput {
+      height: 150px;
+    }
+    .help-text {
+      display: block;
+      font-size: 0.75rem;
+      color: #6B7280;
+      margin-top: 0.25rem;
+    }
+    .dynamic-form {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .error-text {
+      color: #dc2626;
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
+    }
+    .form-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 0.5rem;
+      padding: 0.5rem;
+      background: #f9fafb;
+      border-radius: 0.375rem;
+    }
+    .form-label {
+      flex: 1;
+      padding-right: 1rem;
+    }
+    .form-input {
+      flex: 2;
+    }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <div class="max-w-4xl mx-auto">
+    <div class="mb-4">
+      <label class="block text-sm font-medium text-gray-700 mb-2">CURL Command Template</label>
+      <textarea id="curlInput" class="w-full p-2 border border-gray-300 rounded-md" placeholder="Enter your CURL command with $data_json_schema$ placeholder..."></textarea>
+    </div>
+
+    <div class="mb-4">
+      <label class="block text-sm font-medium text-gray-700 mb-2">JSON Schema</label>
+      <textarea id="schemaInput" class="w-full p-2 border border-gray-300 rounded-md" placeholder="Enter your JSON-Lite schema..."></textarea>
+      <div id="schemaError" class="error-text hidden"></div>
+    </div>
+
+    <div class="mb-4">
+      <label class="flex items-center space-x-2">
+        <input type="checkbox" id="streamingToggle" class="form-checkbox">
+        <span class="text-sm font-medium text-gray-700">Enable Streaming</span>
+      </label>
+    </div>
+
+    <div class="mb-4">
+      <label class="block text-sm font-medium text-gray-700">Dynamic Form</label>
+      <div id="dynamicForm" class="dynamic-form mt-2 border border-gray-200 rounded-md p-4">
+        <div class="text-gray-500 text-sm text-center p-4">
+          Enter a valid JSON schema above to generate the form
+        </div>
+      </div>
+    </div>
+
+    <div class="mb-4">
+      <label class="block text-sm font-medium text-gray-700">
+        Output Path for Response JSON Processing
+      </label>
+      <span class="help-text">Leave empty to see full response</span>
+      <input type="text" id="outputPath" class="w-full p-2 border border-gray-300 rounded-md mt-1" placeholder="e.g., choices[0].message.content">
+    </div>
+
+    <button id="sendButton" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700">
+      Send Request
+    </button>
+
+    <div class="mt-4">
+      <div class="flex justify-between items-center">
+        <label class="block text-sm font-medium text-gray-700">Response</label>
+        <button id="toggleRaw" class="text-sm text-blue-600 hover:text-blue-800">
+          Toggle Raw/Processed
+        </button>
+      </div>
+      <div id="responseArea" class="w-full h-32 p-2 mt-2 bg-white border border-gray-300 rounded-md overflow-auto"></div>
+    </div>
+
+    <div class="loading" id="loadingIndicator">
+      <div class="text-center">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+        <p class="mt-2 text-gray-600">Processing...</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

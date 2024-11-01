@@ -1,0 +1,19 @@
+{
+  "manifest_version": 3,
+  "name": "Curl Json Extension",
+  "version": "1.0",
+  "description": "Stream responses from AI's chat API",
+  "permissions": [
+    "storage"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "host_permissions": [
+    "https://api.openai.com/*"
+  ]
+}
