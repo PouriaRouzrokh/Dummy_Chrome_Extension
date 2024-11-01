@@ -526,22 +526,28 @@ document.addEventListener('DOMContentLoaded', function() {
       sendButton.disabled = true;
   
       if (isStreaming) {
-          try {
-              const currentPort = initializePort();
-              if (!currentPort) {
-                  throw new Error('Failed to initialize port');
-              }
-  
-              currentPort.postMessage({ 
-                  type: 'makeStreamingRequest',
-                  curlCommand: curl,
-                  formData: formData
-              });
-          } catch (error) {
-              loadingIndicator.style.display = 'none';
-              sendButton.disabled = false;
-              responseArea.innerHTML = `<span class="text-red-500">Error: ${error.message}</span>`;
-          }
+        try {
+            const currentPort = initializePort();
+            if (!currentPort) {
+                throw new Error('Failed to initialize port');
+            }
+    
+            // Make sure formData includes the model and all required fields
+            const formData = collectFormData();
+            
+            // For streaming requests, ensure stream is set to true
+            formData.stream = true;
+    
+            currentPort.postMessage({ 
+                type: 'makeStreamingRequest',
+                curlCommand: curl,
+                formData: formData
+            });
+        } catch (error) {
+            loadingIndicator.style.display = 'none';
+            sendButton.disabled = false;
+            responseArea.innerHTML = `<span class="text-red-500">Error: ${error.message}</span>`;
+        }
       } else {
           // Non-streaming request
           try {

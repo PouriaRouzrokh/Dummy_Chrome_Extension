@@ -63,25 +63,15 @@ async function makeRequest({ url, headers, data }) {
             }
         }
     } catch (error) {
-        if (error.message.includes('Failed to fetch')) {
-            const urlObj = new URL(url);
-            if (urlObj.hostname === 'localhost') {
-                throw new Error(
-                    `Connection failed to localhost. Please ensure:\n` +
-                    `1. The server is running at ${url}\n` +
-                    `2. The protocol (${urlObj.protocol}) matches your server configuration\n` +
-                    `3. The port number is correct`
-                );
-            } else {
-                throw new Error(`Connection failed to ${url}. Please check the URL and try again.`);
-            }
-        }
         throw error;
     }
 }
 
 async function handleStreamingRequest(port, parsedCurl) {
     try {
+        // Make sure data is properly set
+        console.log('Streaming request data:', parsedCurl.data); // Debug log
+
         const response = await fetch(parsedCurl.url, {
             method: 'POST',
             headers: parsedCurl.headers,
@@ -134,7 +124,7 @@ async function handleStreamingRequest(port, parsedCurl) {
 // Handle regular message requests
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.type === 'makeRequest') {
-        const { curlCommand, formData } = request; // Now also expecting formData
+        const { curlCommand, formData } = request;
         
         try {
             const parsedCurl = parseCurl(curlCommand);
@@ -163,6 +153,7 @@ chrome.runtime.onConnect.addListener(function(port) {
         if (request.type === 'makeStreamingRequest') {
             try {
                 const parsedCurl = parseCurl(request.curlCommand);
+                parsedCurl.data = request.formData; // Make sure we use the formData from the request
                 await handleStreamingRequest(port, parsedCurl);
             } catch (error) {
                 port.postMessage({ error: error.message });

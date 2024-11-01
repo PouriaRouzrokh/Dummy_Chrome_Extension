@@ -529,22 +529,28 @@ document.addEventListener('DOMContentLoaded', function() {
       sendButton.disabled = true;
   
       if (isStreaming) {
-          try {
-              const currentPort = initializePort();
-              if (!currentPort) {
-                  throw new Error('Failed to initialize port');
-              }
-  
-              currentPort.postMessage({ 
-                  type: 'makeStreamingRequest',
-                  curlCommand: curl,
-                  formData: formData
-              });
-          } catch (error) {
-              loadingIndicator.style.display = 'none';
-              sendButton.disabled = false;
-              responseArea.innerHTML = `<span class="text-red-500">Error: ${error.message}</span>`;
-          }
+        try {
+            const currentPort = initializePort();
+            if (!currentPort) {
+                throw new Error('Failed to initialize port');
+            }
+    
+            // Make sure formData includes the model and all required fields
+            const formData = collectFormData();
+            
+            // For streaming requests, ensure stream is set to true
+            formData.stream = true;
+    
+            currentPort.postMessage({ 
+                type: 'makeStreamingRequest',
+                curlCommand: curl,
+                formData: formData
+            });
+        } catch (error) {
+            loadingIndicator.style.display = 'none';
+            sendButton.disabled = false;
+            responseArea.innerHTML = `<span class="text-red-500">Error: ${error.message}</span>`;
+        }
       } else {
           // Non-streaming request
           try {
@@ -721,25 +727,15 @@ async function makeRequest({ url, headers, data }) {
             }
         }
     } catch (error) {
-        if (error.message.includes('Failed to fetch')) {
-            const urlObj = new URL(url);
-            if (urlObj.hostname === 'localhost') {
-                throw new Error(
-                    `Connection failed to localhost. Please ensure:\n` +
-                    `1. The server is running at ${url}\n` +
-                    `2. The protocol (${urlObj.protocol}) matches your server configuration\n` +
-                    `3. The port number is correct`
-                );
-            } else {
-                throw new Error(`Connection failed to ${url}. Please check the URL and try again.`);
-            }
-        }
         throw error;
     }
 }
 
 async function handleStreamingRequest(port, parsedCurl) {
     try {
+        // Make sure data is properly set
+        console.log('Streaming request data:', parsedCurl.data); // Debug log
+
         const response = await fetch(parsedCurl.url, {
             method: 'POST',
             headers: parsedCurl.headers,
@@ -792,7 +788,7 @@ async function handleStreamingRequest(port, parsedCurl) {
 // Handle regular message requests
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.type === 'makeRequest') {
-        const { curlCommand, formData } = request; // Now also expecting formData
+        const { curlCommand, formData } = request;
         
         try {
             const parsedCurl = parseCurl(curlCommand);
@@ -821,6 +817,7 @@ chrome.runtime.onConnect.addListener(function(port) {
         if (request.type === 'makeStreamingRequest') {
             try {
                 const parsedCurl = parseCurl(request.curlCommand);
+                parsedCurl.data = request.formData; // Make sure we use the formData from the request
                 await handleStreamingRequest(port, parsedCurl);
             } catch (error) {
                 port.postMessage({ error: error.message });
