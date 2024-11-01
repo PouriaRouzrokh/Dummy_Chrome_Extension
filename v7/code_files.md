@@ -85,59 +85,88 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   
     function generateFormFromSchema(schema, parentKey = '', level = 0) {
-      if (level === 0) {
-          dynamicForm.innerHTML = '';
-      }
-  
-      Object.entries(schema).forEach(([key, value]) => {
-          const fullKey = parentKey ? `${parentKey}.${key}` : key;
-          
-          if (Array.isArray(value)) {
-              // Handle array type schemas
-              const arrayContainer = document.createElement('div');
-              arrayContainer.className = 'mb-4 bg-gray-50 rounded-lg p-4';
-              
-              const arrayHeader = document.createElement('div');
-              arrayHeader.className = 'flex justify-between items-center mb-3';
-              
-              const arrayTitle = document.createElement('div');
-              arrayTitle.className = 'text-sm font-medium text-gray-700';
-              arrayTitle.textContent = `${key} (Array)`;
-              arrayHeader.appendChild(arrayTitle);
-              
-              const addButton = document.createElement('button');
-              addButton.textContent = `Add ${key} Item`;
-              addButton.className = 'bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600 transition-colors';
-              addButton.onclick = () => addArrayItem(arrayItemsContainer, value[0], fullKey);
-              arrayHeader.appendChild(addButton);
-              
-              arrayContainer.appendChild(arrayHeader);
-              
-              // Container for array items
-              const arrayItemsContainer = document.createElement('div');
-              arrayItemsContainer.className = 'space-y-4';
-              arrayContainer.appendChild(arrayItemsContainer);
-              
-              dynamicForm.appendChild(arrayContainer);
-  
-              // Always create at least one item for required arrays
-              if (value.length > 0) {
-                  addArrayItem(arrayItemsContainer, value[0], fullKey, true);
-              }
-          } else if (value && typeof value === 'object') {
-              if (value.type) {
-                  // This is a field definition
-                  createFormField(fullKey, value);
-              } else {
-                  // This is a nested object
-                  const fieldset = document.createElement('fieldset');
-                  fieldset.className = 'mb-4 border rounded-lg p-4';
-                  fieldset.innerHTML = `<legend class="px-2 text-sm font-medium text-gray-700">${key}</legend>`;
-                  dynamicForm.appendChild(fieldset);
-                  generateFormFromSchema(value, fullKey, level + 1);
-              }
-          }
-      });
+        if (level === 0) {
+            dynamicForm.innerHTML = '';
+        }
+
+        Object.entries(schema).forEach(([key, value]) => {
+            const fullKey = parentKey ? `${parentKey}.${key}` : key;
+            
+            // Special handling for messages array to maintain initial messages
+            if (key === 'messages' && Array.isArray(value)) {
+                const arrayContainer = document.createElement('div');
+                arrayContainer.className = 'mb-4 bg-gray-50 rounded-lg p-4';
+                
+                const arrayHeader = document.createElement('div');
+                arrayHeader.className = 'flex justify-between items-center mb-3';
+                
+                const arrayTitle = document.createElement('div');
+                arrayTitle.className = 'text-sm font-medium text-gray-700';
+                arrayTitle.textContent = 'Messages';
+                arrayHeader.appendChild(arrayTitle);
+                
+                const addButton = document.createElement('button');
+                addButton.textContent = 'Add Message';
+                addButton.className = 'bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600 transition-colors';
+                addButton.onclick = () => addArrayItem(arrayItemsContainer, value[value.length - 1], fullKey);
+                arrayHeader.appendChild(addButton);
+                
+                arrayContainer.appendChild(arrayHeader);
+                
+                const arrayItemsContainer = document.createElement('div');
+                arrayItemsContainer.className = 'space-y-4';
+                arrayContainer.appendChild(arrayItemsContainer);
+                
+                dynamicForm.appendChild(arrayContainer);
+
+                // Create initial messages based on schema
+                value.forEach((messageSchema, index) => {
+                    // For the first N-1 messages, don't allow removal
+                    const isInitialMessage = index < value.length - 1;
+                    addArrayItem(arrayItemsContainer, messageSchema, fullKey, isInitialMessage);
+                });
+            } else if (Array.isArray(value)) {
+                // Handle other arrays as before
+                const arrayContainer = document.createElement('div');
+                arrayContainer.className = 'mb-4 bg-gray-50 rounded-lg p-4';
+                
+                const arrayHeader = document.createElement('div');
+                arrayHeader.className = 'flex justify-between items-center mb-3';
+                
+                const arrayTitle = document.createElement('div');
+                arrayTitle.className = 'text-sm font-medium text-gray-700';
+                arrayTitle.textContent = `${key} (Array)`;
+                arrayHeader.appendChild(arrayTitle);
+                
+                const addButton = document.createElement('button');
+                addButton.textContent = `Add ${key} Item`;
+                addButton.className = 'bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600 transition-colors';
+                addButton.onclick = () => addArrayItem(arrayItemsContainer, value[0], fullKey);
+                arrayHeader.appendChild(addButton);
+                
+                arrayContainer.appendChild(arrayHeader);
+                
+                const arrayItemsContainer = document.createElement('div');
+                arrayItemsContainer.className = 'space-y-4';
+                arrayContainer.appendChild(arrayItemsContainer);
+                
+                dynamicForm.appendChild(arrayContainer);
+
+                if (value.length > 0) {
+                    addArrayItem(arrayItemsContainer, value[0], fullKey, true);
+                }
+            } else if (value && typeof value === 'object') {
+                if (value.type) {
+                    createFormField(fullKey, value);
+                } else {
+                    const fieldset = document.createElement('fieldset');
+                    fieldset.className = 'mb-4 border rounded-lg p-4';
+                    fieldset.innerHTML = `<legend class="px-2 text-sm font-medium text-gray-700">${key}</legend>`;
+                    dynamicForm.appendChild(fieldset);
+                    generateFormFromSchema(value, fullKey, level + 1);
+                }
+            }
+        });
     }
   
     function createFormField(key, schema) {
@@ -230,61 +259,61 @@ document.addEventListener('DOMContentLoaded', function() {
         dynamicForm.appendChild(container);
     }
   
-   function addArrayItem(container, schema, arrayKey, isFirstItem = false) {
-    const itemContainer = document.createElement('div');
-    itemContainer.className = 'mb-4 ml-4 p-3 border-l-2 border-blue-200';
-    container.appendChild(itemContainer);
+    function addArrayItem(container, schema, arrayKey, isInitialMessage = false) {
+        const itemContainer = document.createElement('div');
+        itemContainer.className = 'mb-4 ml-4 p-3 border-l-2 border-blue-200';
+        container.appendChild(itemContainer);
 
-    // Add array item header
-    const headerDiv = document.createElement('div');
-    headerDiv.className = 'flex justify-between items-center mb-3';
-    
-    const itemTitle = document.createElement('div');
-    itemTitle.className = 'text-sm font-medium text-gray-700';
-    itemTitle.textContent = `Item ${container.querySelectorAll('.border-l-2').length}`;
-    headerDiv.appendChild(itemTitle);
+        // Add array item header
+        const headerDiv = document.createElement('div');
+        headerDiv.className = 'flex justify-between items-center mb-3';
+        
+        const itemTitle = document.createElement('div');
+        itemTitle.className = 'text-sm font-medium text-gray-700';
+        itemTitle.textContent = isInitialMessage ? 
+            `Initial Message ${container.querySelectorAll('.border-l-2').length}` :
+            `Message ${container.querySelectorAll('.border-l-2').length}`;
+        headerDiv.appendChild(itemTitle);
 
-    // Only add remove button if it's not the first item
-    if (!isFirstItem) {
-        const removeButton = document.createElement('button');
-        removeButton.textContent = 'Remove';
-        removeButton.className = 'bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600 transition-colors';
-        removeButton.onclick = () => {
-            container.removeChild(itemContainer);
-            updateArrayIndices(container, arrayKey);
-        };
-        headerDiv.appendChild(removeButton);
-    }
-
-    itemContainer.appendChild(headerDiv);
-
-    // Calculate the index for this item
-    const existingItems = container.querySelectorAll('.border-l-2').length - 1;
-    const itemIndex = existingItems;
-    
-    // Create fields container
-    const fieldsContainer = document.createElement('div');
-    fieldsContainer.className = 'space-y-3';
-    
-    // Generate form fields for this item
-    Object.entries(schema).forEach(([key, value]) => {
-        const fieldKey = `${arrayKey}[${itemIndex}].${key}`;
-        if (typeof value === 'object' && value !== null) {
-            // Create a nested container for each field
-            const fieldContainer = document.createElement('div');
-            fieldContainer.className = 'bg-white rounded-md p-2';
-            fieldsContainer.appendChild(fieldContainer);
-            
-            // Use the parent createFormField but append to our field container
-            const originalAppend = dynamicForm.appendChild.bind(dynamicForm);
-            dynamicForm.appendChild = fieldContainer.appendChild.bind(fieldContainer);
-            createFormField(fieldKey, value);
-            dynamicForm.appendChild = originalAppend;
+        // Only add remove button if it's not an initial message
+        if (!isInitialMessage) {
+            const removeButton = document.createElement('button');
+            removeButton.textContent = 'Remove';
+            removeButton.className = 'bg-red-500 text-white px-2 py-1 rounded text-sm hover:bg-red-600 transition-colors';
+            removeButton.onclick = () => {
+                container.removeChild(itemContainer);
+                updateArrayIndices(container, arrayKey);
+            };
+            headerDiv.appendChild(removeButton);
         }
-    });
-    
-    itemContainer.appendChild(fieldsContainer);
-  }
+
+        itemContainer.appendChild(headerDiv);
+
+        // Calculate the index for this item
+        const existingItems = container.querySelectorAll('.border-l-2').length - 1;
+        const itemIndex = existingItems;
+        
+        // Create fields container
+        const fieldsContainer = document.createElement('div');
+        fieldsContainer.className = 'space-y-3';
+        
+        // Generate form fields for this item
+        Object.entries(schema).forEach(([key, value]) => {
+            const fieldKey = `${arrayKey}[${itemIndex}].${key}`;
+            if (typeof value === 'object' && value !== null) {
+                const fieldContainer = document.createElement('div');
+                fieldContainer.className = 'bg-white rounded-md p-2';
+                fieldsContainer.appendChild(fieldContainer);
+                
+                const originalAppend = dynamicForm.appendChild.bind(dynamicForm);
+                dynamicForm.appendChild = fieldContainer.appendChild.bind(fieldContainer);
+                createFormField(fieldKey, value);
+                dynamicForm.appendChild = originalAppend;
+            }
+        });
+        
+        itemContainer.appendChild(fieldsContainer);
+    }
   
     function updateArrayIndices(container, arrayKey) {
       const items = container.querySelectorAll('div.border-l-2');
